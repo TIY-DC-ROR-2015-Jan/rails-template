@@ -30,7 +30,7 @@ gem_group :development, :test do
 end
 
 gem_group :test do
-  gem 'factory_girl'
+  gem 'factory_girl_rails'
   gem 'simplecov'
 end
 
