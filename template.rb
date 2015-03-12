@@ -103,6 +103,7 @@ end
 
 after_bundle do
   run "spring stop" # the next generators may hang otherwise
+  run "figaro install"
   configure_rspec
   configure_devise
   rake "db:migrate"
