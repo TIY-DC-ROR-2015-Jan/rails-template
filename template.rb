@@ -14,6 +14,7 @@ remove_gem 'web-console'
 
 gem 'devise'
 gem 'figaro'
+gem 'activesupport'
 
 %w( httparty ).each do |optional|
   if yes? "Install #{optional}? (y/n)"
@@ -32,6 +33,7 @@ end
 gem_group :test do
   gem 'factory_girl_rails'
   gem 'simplecov'
+  gem 'zonebie'
 end
 
 
