@@ -23,13 +23,6 @@ gem 'slim-rails'
   end
 end
 
-
-if yes? "Would you like the Lib folder to autoload? y/n"
-    file "config/application.rb", <<-CODE
-  config.autoload_paths << Rails.root.join('lib')
-    CODE
-end
-
 gem_group :development, :test do
   gem 'better_errors'
   gem 'binding_of_caller'
