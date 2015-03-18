@@ -28,10 +28,10 @@ gem_group :development, :test do
   gem 'pry-rails'
   gem 'rspec-rails'
   gem 'quiet_assets'
+  gem 'factory_girl_rails'
 end
 
 gem_group :test do
-  gem 'factory_girl_rails'
   gem 'simplecov'
   gem 'zonebie'
 end
