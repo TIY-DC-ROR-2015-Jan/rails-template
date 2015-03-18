@@ -15,6 +15,7 @@ remove_gem 'web-console'
 gem 'devise'
 gem 'figaro'
 gem 'activesupport'
+gem 'slim-rails'
 
 %w( httparty ).each do |optional|
   if yes? "Install #{optional}? (y/n)"
