@@ -2,33 +2,30 @@
 # * Better application layout (with flash configured). Bootstrap by default?
 # * Better ASCII art when done
 
-def remove_gem name
+
+
+# -- Set consistent Ruby version -----
+
+create_file ".ruby-version", RUBY_VERSION
+insert_into_file "Gemfile", %|ruby File.read(File.expand_path "../.ruby-version", __FILE__)|,
+  after: "source 'https://rubygems.org'\n"
+
+
+# -- Configure Gemfile -----
+
+%w( byebug web-console ).each do |name|
+  # Remove Gems
   gsub_file "Gemfile", /^\s*gem\s+["']#{name}["'].*\n/, ''
 end
 
-remove_gem 'turbolinks'
-gsub_file "app/assets/javascripts/application.js", /^.*turbolinks.*$/, ''
-
-remove_gem 'byebug'
-remove_gem 'web-console'
-
-gem 'devise'
-gem 'figaro'
-gem 'activesupport'
-gem 'slim-rails'
-
-%w( httparty ).each do |optional|
-  if yes? "Install #{optional}? (y/n)"
-    gem optional
-  end
-end
+%w(
+    bootstrap_form devise figaro pg pry-rails quiet_assets slim-rails
+    twitter-bootstrap-rails
+).each { |name| gem name }
 
 gem_group :development, :test do
   gem 'better_errors'
   gem 'binding_of_caller'
-  gem 'pry-rails'
-  gem 'rspec-rails'
-  gem 'quiet_assets'
   gem 'factory_girl_rails'
 end
 
@@ -37,80 +34,43 @@ gem_group :test do
   gem 'zonebie'
 end
 
-
-def configure_rspec
-  run "rm -rf test"
-  generate "rspec:install"
-
-  # Ew. This is real gross.
-  uncomment_lines "spec/rails_helper.rb", /Dir\[Rails.root.join\('spec\/support/
-
-  %w( models controllers support ).each { |f| empty_directory "spec/#{f}" }
-
-  file "spec/support/focus.rb", <<-CODE
-RSpec.configure do |config|
-  config.filter_run :focus
-  config.run_all_when_everything_filtered = true
-end
-  CODE
-
-  file "spec/support/devise.rb", <<-CODE
-RSpec.configure do |config|
-  config.include Devise::TestHelpers, type: :controller
-
-  module ExtraDeviseTestHelpers
-    def login user
-      @request.env["devise.mapping"] = Devise.mappings[:user]
-      sign_in user
-    end
-  end
-  config.include ExtraDeviseTestHelpers
-end
-  CODE
-
-  file "spec/support/json.rb", <<-CODE
-RSpec.configure do |config|
-  module JSONHelpers
-    def json
-      if response.body.empty?
-        raise "Empty body; did you enable `render_views`?"
-      else
-        JSON.parse response.body
-      end
-    end
-  end
-  config.include JSONHelpers
-end
-  CODE
+gem_group :production do
+  gem 'rails_12factor'
+  gem 'puma'
+  gem 'rollbar'
 end
 
 
-def configure_devise
-  # TODO: add `before_action :authenticate_user!`?
-  generate "devise:install"
-  generate "devise", "User"
-  environment 'config.action_mailer.default_url_options = { host: "localhost", port: 3000 }'
-end
-
-
-def initialize_git_repo
-  %w( .DS_Store .env ).each do |ignored|
-    append_to_file ".gitignore", ignored
-  end
-
-  git :init
-  git add: "."
-  git commit: %Q{ -m 'Initial commit' }
-end
-
+# -- Run generators, &c -----
 
 after_bundle do
   run "spring stop" # the next generators may hang otherwise
+
+  # Bootstrap
+  generate "bootstrap:install static"
+  remove_file "app/views/layouts/application.html.erb"
+  generate "bootstrap:layout"
+
+  # Figaro
   run "figaro install"
-  configure_rspec
-  configure_devise
+
+  # Rollbar
+  generate "rollbar"
+
+  # Devise
+  generate "devise:install"
+  generate "devise", "User"
+  environment 'config.action_mailer.default_url_options = { host: "localhost", port: 3000 }'
+
   rake "db:migrate"
-  initialize_git_repo
+
+  # Initialize the git repo
+  %w( .DS_Store .env ).each do |ignored|
+    append_to_file ".gitignore", ignored
+  end
+  git :init
+  git add: "."
+  git commit: %Q{ -m 'Initial commit' }
 
   say "You're all set!", Thor::Shell::Color::GREEN
 end
